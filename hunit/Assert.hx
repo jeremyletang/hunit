@@ -51,7 +51,7 @@ class Assert {
     // }
 
     public static function fail(msg: String) {
-        throw new AssertException("");
+        throw new AssertException(msg);
     }
 
     public static function fail2() {
