@@ -6,23 +6,6 @@ import haxe.macro.Context;
 
 import hunit.TestResult;
 
-// class ClassDatas {
-//     public var name: String;
-//     public var methods: Array<MethodDatas> = [];
-
-//     public function new(name: String) {
-//         this.name = name;
-//     }
-
-//     public function getMethods(): Array<MethodDatas> {
-//         return this.methods;
-//     }
-
-//     public function addMethod(method: MethodDatas) {
-//         this.methods.push(method);
-//     }
-// }
-
 typedef MethodDatas = {
     name: String,
     exception: String
@@ -32,17 +15,6 @@ typedef ClassDatas = {
     name: String,
     methods: Array<MethodDatas>
 };
-
-
-// class MethodDatas {
-//     public var name: String;
-//     public var exception: String;
-
-//     public function new(name: String, exception: String) {
-//         this.name = name;
-//         this.exception = exception;
-//     }
-// }
 
 class HUnitTestRunner {
 
