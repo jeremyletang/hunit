@@ -1,0 +1,11 @@
+{
+    "name": "hunit",
+    "url" : "https://github.com/jeremyletang/hunit",
+    "license": "MIT",
+    "tags": ["test", "unit"],
+    "description": "simple unit testing",
+    "version": "0.0.1",
+    "releasenote": "alpha",
+    "contributors": ["beluga"],
+    "dependencies": {}
+}
