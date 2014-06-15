@@ -11,6 +11,8 @@ before_script:
   - haxelib dev beluga .
   - cd tests
   - sudo chmod 774 run.sh
+  - haxe build.hxml
+  - php bin/index.php
 
 script:
   - ./run.sh
