@@ -1,4 +1,4 @@
-language: java
+language: php
 
 before_script:
   - sudo apt-get update
@@ -8,7 +8,7 @@ before_script:
   - sudo apt-get install haxe -y
   - mkdir ~/haxelib
   - haxelib setup ~/haxelib
-  - haxelib dev beluga .
+  - haxelib dev hunit .
 
 script:
   - cd tests
