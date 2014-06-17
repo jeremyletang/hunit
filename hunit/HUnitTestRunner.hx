@@ -30,11 +30,15 @@ import hunit.TestResult;
 
 typedef MethodDatas = {
     name: String,
-    exception: String
+    exception: String,
 };
 
 typedef ClassDatas = {
     name: String,
+    before: String,
+    after: String,
+    before_class: String,
+    after_class: String,
     methods: Array<MethodDatas>
 };
 
@@ -52,6 +56,10 @@ class HUnitTestRunner {
     macro public static function readMetadata(): Array<Field> {
         var class_fields = Context.getBuildFields();
         var methods: Array<MethodDatas> = [];
+        var before: String = "";
+        var after: String = "";
+        var before_class: String = "";
+        var after_class: String = "";
 
         for (f in class_fields) {
             var method_name = "";
@@ -64,7 +72,31 @@ class HUnitTestRunner {
                             case _: throw new Error("@htest must be used on methods", Context.currentPos());
                         }
                     }
-                    case "hexpect_exception": { // hexcpect_exception
+                    case "hbefore": { // htest metadata
+                        switch (f.kind) {
+                            case FFun(_): before = f.name; // only on methods fields
+                            case _: throw new Error("@hbefore must be used on methods", Context.currentPos());
+                        }
+                    }
+                    case "hafter": { // htest metadata
+                        switch (f.kind) {
+                            case FFun(_): after = f.name; // only on methods fields
+                            case _: throw new Error("@hafter must be used on methods", Context.currentPos());
+                        }
+                    }
+                    case "hbefore_class": { // htest metadata
+                        switch (f.kind) {
+                            case FFun(_): before_class = f.name; // only on methods fields
+                            case _: throw new Error("@hbefore must be used on methods", Context.currentPos());
+                        }
+                    }
+                    case "hafter_class": { // htest metadata
+                        switch (f.kind) {
+                            case FFun(_): after_class = f.name; // only on methods fields
+                            case _: throw new Error("@hafter must be used on methods", Context.currentPos());
+                        }
+                    }
+                    case "hexpect_throw": { // hexcpect_exception
                         switch (f.kind) {
                             case FFun(_): { // only on methods fields
                                 for (p in m.params) { // checks parameters of the metadata
@@ -74,15 +106,15 @@ class HUnitTestRunner {
                                             if (Type.resolveClass(i) != null) { // verify that the class exception exist
                                                 exception = i;
                                             } else {
-                                                throw new Error("@hexpect_exception must be used with valid exception class, " +
+                                                throw new Error("@hexpect_throw must be used with valid exception class, " +
                                                                 i + " is not a class.", Context.currentPos());
                                             }
                                         }
-                                        case _: new Error("@hexpect_exception must be used with string literal, ",Context.currentPos());
+                                        case _: new Error("@hexpect_throw must be used with string literal, ",Context.currentPos());
                                     }
                                 }
                             }
-                            case _: throw new Error("@hexpect_exception must be used on methods", Context.currentPos());
+                            case _: throw new Error("@hexpect_throw must be used on methods", Context.currentPos());
                         }
                     }
                     case _: {}
@@ -98,6 +130,10 @@ class HUnitTestRunner {
 
         static_test_class.push({ // push the new test class
             name: Context.getLocalClass().get().module,
+            before: before,
+            after: after,
+            before_class: before_class,
+            after_class: after_class,
             methods: methods
         });
 
@@ -114,32 +150,65 @@ class HUnitTestRunner {
             local_failure = 0;
             local_success = 0;
             Sys.println("[hunit] Running " + t.name);
-            var test_class = Type.resolveClass(t.name); // resolve the class
-            for (m in t.methods) { // for all methods launch test
-                Sys.print("    [hunit] Test " + m.name + "... ");
+
+            // get the class
+            var test_class = Type.createInstance(Type.resolveClass(t.name), []);
+
+            // init the class
+            this.launchTest(test_class, { name: t.before_class, exception: "" });
+
+             // for all methods launch test
+            for (m in t.methods) {
+                // run before test
+                this.launchTest(test_class, { name: t.before, exception: "" });
+                // run the test
                 switch (this.launchTest(test_class, m)) {
-                    case Ok: local_success += 1; Sys.println("\x1b[32mOK\x1b[39;49m.");
-                    case Fail(str): {
-                        local_failure += 1;
-                        Sys.println("\x1b[31mFAILED\x1b[39;49m.");
-                        Sys.println("        " + str);
-                    }
+                    case Ok: local_success += 1; printTestSuccess(m.name);
+                    case Fail(str): local_failure += 1; printTestFail(m.name, str);
                 };
+                // run after test
+                this.launchTest(test_class, { name: t.after, exception: "" });
             }
-            Sys.println("    [hunit] Results for " + t.name +
-                        ": Runned: " + (local_success + local_failure) +
-                        " / Success: " + local_success +
-                        " / Failure: " + local_failure + "\n");
+
+            // clean the class
+            this.launchTest(test_class, { name: t.after_class, exception: "" });
+
+            // result for the class
+            printLocalResult(local_success, local_failure, t.name);
             total_success += local_success;
             total_failure += local_failure;
         }
 
+        // all the results
+        this.printTotalResult(total_success, total_failure);
+
+        // exit with total_failure -> no failure == 0 == OK !
+        Sys.exit(total_failure);
+    }
+
+    private function printTestFail(test_name: String, o: Dynamic) {
+        Sys.print("    [hunit] Test " + test_name + "... ");
+        Sys.println("\x1b[31mFAILED\x1b[39;49m.");
+        Sys.println("        " + o);
+    }
+
+    private function printTestSuccess(test_name: String) {
+        Sys.print("    [hunit] Test " + test_name + "... ");
+        Sys.println("\x1b[32mOK\x1b[39;49m.");
+    }
+
+    private function printTotalResult(total_success: Int, total_failure: Int) {
         Sys.println("[hunit] Total results: " +
                     " Runned: " + (total_success + total_failure) +
                     " / Success: " + total_success +
                     " / Failure: " + total_failure + "\n");
+    }
 
-        Sys.exit(total_failure);
+    private function printLocalResult(local_success: Int, local_failure: Int, test_name: String) {
+        Sys.println("    [hunit] Results for " + test_name +
+                    ": Runned: " + (local_success + local_failure) +
+                    " / Success: " + local_success +
+                    " / Failure: " + local_failure + "\n");
     }
 
     private function launchTest(test_class: Dynamic, method: MethodDatas): TestResult {

@@ -22,6 +22,8 @@
 
 package hunit;
 
+import haxe.ds.Option;
+
 import hunit.AssertException;
 
 class Assert {
@@ -68,9 +70,19 @@ class Assert {
         }
     }
 
-    // public static function same(left_object: T, right_object: T) {
-    //     if ()
-    // }
+    public static function isSome<T>(object: Option<T>) {
+        switch (object) {
+            case Some(o): {};
+            case None: throw new AssertException("expected Some(object) but found None");
+        }
+    }
+
+    public static function isNone<T>(object: Option<T>) {
+        switch (object) {
+            case Some(o): throw new AssertException("expected None but found Some(object)");
+            case None: {};
+        }
+    }
 
     public static function fail(msg: String) {
         throw new AssertException(msg);

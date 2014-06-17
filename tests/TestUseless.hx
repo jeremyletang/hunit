@@ -18,7 +18,7 @@ class TestUseless implements HUnitTest {
 
     // should fail
     @htest
-    @hexpect_exception("Int")
+    @hexpect_throw("Int")
     public function isWhatWhatWhatTheFuckInt() {
         Assert.isTrue(true);
         throw "this is an exception";
@@ -26,7 +26,7 @@ class TestUseless implements HUnitTest {
 
     // should sucess
     @htest
-    @hexpect_exception("String")
+    @hexpect_throw("String")
     public function isWhatWhatWhatTheFuckString() {
         Assert.isTrue(true);
         throw "this is an exception";
