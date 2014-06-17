@@ -12,12 +12,14 @@ class TestUseless implements HUnitTest {
 
     // should fail
     @htest
+    @hshould_fail
     public function ifIDoThisThenThisMakeThis() {
         Assert.eq(1, 2);
     }
 
     // should fail
     @htest
+    @hshould_fail
     @hexpect_throw("Int")
     public function isWhatWhatWhatTheFuckInt() {
         Assert.isTrue(true);

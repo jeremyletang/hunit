@@ -29,6 +29,7 @@ import haxe.macro.Context;
 typedef MethodDatas = {
     name: String,
     exception: String,
+    should_fail: Bool
 };
 
 typedef ClassDatas = {
@@ -62,10 +63,12 @@ class MetaReader {
         var after: String = "";
         var before_class: String = "";
         var after_class: String = "";
+        var should_fail: Bool = false;
 
         for (f in class_fields) {
             var method_name = "";
             var exception = "";
+            var should_fail: Bool = false;
             for (m in f.meta) {
                 switch (m.name) {
                     case "htest": { // htest metadata
@@ -89,13 +92,19 @@ class MetaReader {
                     case "hbefore_class": { // htest metadata
                         switch (f.kind) {
                             case FFun(_): before_class = f.name; // only on methods fields
-                            case _: throw new Error("@hbefore must be used on methods", Context.currentPos());
+                            case _: throw new Error("@hbefore_class must be used on methods", Context.currentPos());
                         }
                     }
                     case "hafter_class": { // htest metadata
                         switch (f.kind) {
                             case FFun(_): after_class = f.name; // only on methods fields
-                            case _: throw new Error("@hafter must be used on methods", Context.currentPos());
+                            case _: throw new Error("@hafter_class must be used on methods", Context.currentPos());
+                        }
+                    }
+                    case "hshould_fail": { // hshould_fail metadata
+                        switch (f.kind) {
+                            case FFun(_): should_fail = true; // only on methods fields
+                            case _: throw new Error("@hshould_fail must be used on methods", Context.currentPos());
                         }
                     }
                     case "hexpect_throw": { // hexcpect_exception
@@ -125,7 +134,8 @@ class MetaReader {
             if (method_name != "") { // push the function name + the exception name
                 methods.push({
                     name: method_name,
-                    exception: exception
+                    exception: exception,
+                    should_fail: should_fail
                 });
             }
         }

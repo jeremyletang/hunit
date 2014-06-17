@@ -23,6 +23,7 @@ class TestFramework implements HUnitTest {
     }
 
     @htest
+    @hshould_fail
     public function isThisTest() {
         this.i += 1;
         Assert.eq(1, 2);

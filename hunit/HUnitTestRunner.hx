@@ -27,7 +27,6 @@ import hunit.MetaReader;
 
 class HUnitTestRunner {
 
-    private static var static_test_class: Array<ClassDatas> = [];
     private var test_classes: Array<ClassDatas> = [];
 
     public function new() { this.test_classes = new MetaReader().getTestClasses(); }
@@ -47,23 +46,26 @@ class HUnitTestRunner {
             var test_class = Type.createInstance(Type.resolveClass(t.name), []);
 
             // init the class
-            this.launchTest(test_class, { name: t.before_class, exception: "" });
+            this.launchTest(test_class, { name: t.before_class, exception: "", should_fail: false });
 
              // for all methods launch test
             for (m in t.methods) {
                 // run before test
-                this.launchTest(test_class, { name: t.before, exception: "" });
+                this.launchTest(test_class, { name: t.before, exception: "", should_fail: false });
                 // run the test
-                switch (this.launchTest(test_class, m)) {
+                var result = this.launchTest(test_class, m);
+                // update the test with should_fail
+                result = this.testShouldFail(result, m.should_fail);
+                switch result {
                     case Ok: local_success += 1; printTestSuccess(m.name);
                     case Fail(str): local_failure += 1; printTestFail(m.name, str);
                 };
                 // run after test
-                this.launchTest(test_class, { name: t.after, exception: "" });
+                this.launchTest(test_class, { name: t.after, exception: "", should_fail: false });
             }
 
             // clean the class
-            this.launchTest(test_class, { name: t.after_class, exception: "" });
+            this.launchTest(test_class, { name: t.after_class, exception: "", should_fail: false });
 
             // result for the class
             printLocalResult(local_success, local_failure, t.name);
@@ -76,6 +78,47 @@ class HUnitTestRunner {
 
         // exit with total_failure -> no failure == 0 == OK !
         Sys.exit(total_failure);
+    }
+
+    private function testShouldFail(result: TestResult, should_fail: Bool): TestResult {
+        switch (result) {
+            case Ok: should_fail == false ? result = Ok : result = Fail("test should fail but has succeed");
+            case Fail(str): should_fail == true ? result = Ok : result = Fail("test should succeed but has failed");
+        };
+        return result;
+    }
+
+    private function launchSimpleTest(test_class: Dynamic, method: MethodDatas): TestResult {
+        var return_value = Ok;
+
+        try {
+            Reflect.callMethod(test_class, Reflect.field(test_class, method.name), []);
+            return_value = Ok;
+        } catch (ex: AssertException) { // Assert failure
+            return_value = Fail(ex.toStr());
+        } catch (e: Dynamic) { // unexpected internal method failure
+            return_value = Fail("unexpected exception catched: " + e);
+        }
+
+        return return_value;
+    }
+
+    private function launchExceptionTest(test_class: Dynamic, method: MethodDatas): TestResult {
+        var return_value = Ok;
+        var type = Type.resolveClass(method.exception);
+
+        try {
+            Reflect.callMethod(test_class, Reflect.field(test_class, method.name), []);
+            return_value = Fail("expected exception " + method.exception + ", no exception catched.");
+        } catch (e: Dynamic) { // An exception should be raised
+            if (type == Type.getClass(e)) { // check if the type of the exception is the needed one
+                return_value = Ok;
+            } else {
+                return_value = Fail("Expected exception of type " + type + " but catched " + Type.getClass(e));
+            }
+        }
+
+        return return_value;
     }
 
     private function printTestFail(test_name: String, o: Dynamic) {
@@ -110,39 +153,6 @@ class HUnitTestRunner {
             return_value = this.launchSimpleTest(test_class, method);
         } else { // launch a test wich handle an exception
             return_value = this.launchExceptionTest(test_class, method);
-        }
-
-        return return_value;
-    }
-
-    private function launchSimpleTest(test_class: Dynamic, method: MethodDatas): TestResult {
-        var return_value = Ok;
-
-        try {
-            Reflect.callMethod(test_class, Reflect.field(test_class, method.name), []);
-            return_value = Ok;
-        } catch (ex: AssertException) { // Assert failure
-            return_value = Fail(ex.toStr());
-        } catch (e: Dynamic) { // unexpected internal method failure
-            return_value = Fail("unexpected exception catched: " + e);
-        }
-
-        return return_value;
-    }
-
-    private function launchExceptionTest(test_class: Dynamic, method: MethodDatas): TestResult {
-        var return_value = Ok;
-        var type = Type.resolveClass(method.exception);
-
-        try {
-            Reflect.callMethod(test_class, Reflect.field(test_class, method.name), []);
-            return_value = Fail("expected exception " + method.exception + ", no exception catched.");
-        } catch (e: Dynamic) { // An exception should be raised
-            if (type == Type.getClass(e)) { // check if the type of the exception is the needed one
-                return_value = Ok;
-            } else {
-                return_value = Fail("Expected exception of type " + type + " but catched " + Type.getClass(e));
-            }
         }
 
         return return_value;
