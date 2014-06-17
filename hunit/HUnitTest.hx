@@ -22,5 +22,5 @@
 
 package hunit;
 
-@:autoBuild(hunit.HUnitTestRunner.readMetadata())
+@:autoBuild(hunit.MetaReader.readMetadata())
 interface HUnitTest {}
