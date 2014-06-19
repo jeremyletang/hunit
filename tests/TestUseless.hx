@@ -11,24 +11,24 @@ class TestUseless implements HUnitTest {
     public function new() {}
 
     // should fail
-    @htest
-    @hshould_fail
+    @test
+    @should_fail
     public function ifIDoThisThenThisMakeThis() {
         Assert.eq(1, 2);
     }
 
     // should fail
-    @htest
-    @hshould_fail
-    @hexpect_throw("Int")
+    @test
+    @should_fail
+    @expect_throw("Int")
     public function isWhatWhatWhatTheFuckInt() {
         Assert.isTrue(true);
         throw "this is an exception";
     }
 
     // should sucess
-    @htest
-    @hexpect_throw("String")
+    @test
+    @expect_throw("String")
     public function isWhatWhatWhatTheFuckString() {
         Assert.isTrue(true);
         throw "this is an exception";

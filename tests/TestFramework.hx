@@ -11,25 +11,25 @@ class TestFramework implements HUnitTest {
 
     public function new() {}
 
-    @hbefore
+    @before
     public function beforeTest() {
         Sys.println("I BEFORE = " + i);
     }
 
-    @hafter
+    @after
     public function afterTest() {
         Sys.println("I AFTER = " + i);
         this.i = 0;
     }
 
-    @htest
-    @hshould_fail
+    @test
+    @should_fail
     public function isThisTest() {
         this.i += 1;
         Assert.eq(1, 2);
     }
 
-    @htest
+    @test
     public function isThisASecondeTest() {
         Assert.isTrue(true);
     }

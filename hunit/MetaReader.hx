@@ -71,43 +71,43 @@ class MetaReader {
             var should_fail: Bool = false;
             for (m in f.meta) {
                 switch (m.name) {
-                    case "htest": { // htest metadata
+                    case "test": { // htest metadata
                         switch (f.kind) {
                             case FFun(_): method_name = f.name; // only on methods fields
                             case _: throw new Error("@htest must be used on methods", Context.currentPos());
                         }
                     }
-                    case "hbefore": { // htest metadata
+                    case "before": { // htest metadata
                         switch (f.kind) {
                             case FFun(_): before = f.name; // only on methods fields
                             case _: throw new Error("@hbefore must be used on methods", Context.currentPos());
                         }
                     }
-                    case "hafter": { // htest metadata
+                    case "after": { // htest metadata
                         switch (f.kind) {
                             case FFun(_): after = f.name; // only on methods fields
                             case _: throw new Error("@hafter must be used on methods", Context.currentPos());
                         }
                     }
-                    case "hbefore_class": { // htest metadata
+                    case "before_class": { // htest metadata
                         switch (f.kind) {
                             case FFun(_): before_class = f.name; // only on methods fields
                             case _: throw new Error("@hbefore_class must be used on methods", Context.currentPos());
                         }
                     }
-                    case "hafter_class": { // htest metadata
+                    case "after_class": { // htest metadata
                         switch (f.kind) {
                             case FFun(_): after_class = f.name; // only on methods fields
                             case _: throw new Error("@hafter_class must be used on methods", Context.currentPos());
                         }
                     }
-                    case "hshould_fail": { // hshould_fail metadata
+                    case "should_fail": { // hshould_fail metadata
                         switch (f.kind) {
                             case FFun(_): should_fail = true; // only on methods fields
                             case _: throw new Error("@hshould_fail must be used on methods", Context.currentPos());
                         }
                     }
-                    case "hexpect_throw": { // hexcpect_exception
+                    case "expect_throw": { // hexcpect_exception
                         switch (f.kind) {
                             case FFun(_): { // only on methods fields
                                 for (p in m.params) { // checks parameters of the metadata
