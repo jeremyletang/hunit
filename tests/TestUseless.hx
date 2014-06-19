@@ -21,6 +21,7 @@ class TestUseless implements HUnitTest {
     @test
     @should_fail
     @expect_throw("Int")
+    @ignore
     public function isWhatWhatWhatTheFuckInt() {
         Assert.isTrue(true);
         throw "this is an exception";

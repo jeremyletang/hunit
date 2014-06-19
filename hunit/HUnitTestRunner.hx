@@ -34,47 +34,56 @@ class HUnitTestRunner {
     public function run() {
         var total_success = 0;
         var total_failure = 0;
+        var total_ignored = 0;
         var local_success = 0;
         var local_failure = 0;
+        var local_ignored = 0;
 
         for (t in this.test_classes) {
             local_failure = 0;
             local_success = 0;
+            local_ignored = 0;
             Sys.println("[hunit] Running " + t.name);
 
             // get the class
             var test_class = Type.createInstance(Type.resolveClass(t.name), []);
 
             // init the class
-            this.launchTest(test_class, { name: t.before_class, exception: "", should_fail: false });
+            this.launchTest(test_class, { name: t.before_class, exception: "", should_fail: false, is_ignored: false });
 
              // for all methods launch test
             for (m in t.methods) {
-                // run before test
-                this.launchTest(test_class, { name: t.before, exception: "", should_fail: false });
-                // run the test
-                var result = this.launchTest(test_class, m);
-                // update the test with should_fail
-                result = this.testShouldFail(result, m.should_fail);
-                switch result {
-                    case Ok: local_success += 1; printTestSuccess(m.name);
-                    case Fail(str): local_failure += 1; printTestFail(m.name, str);
-                };
-                // run after test
-                this.launchTest(test_class, { name: t.after, exception: "", should_fail: false });
+                if (m.is_ignored) {
+                    this.printTestIgnored(m.name);
+                    local_ignored += 1;
+                } else {
+                    // run before test
+                    this.launchTest(test_class, { name: t.before, exception: "", should_fail: false, is_ignored: false });
+                    // run the test
+                    var result = this.launchTest(test_class, m);
+                    // update the test with should_fail
+                    result = this.testShouldFail(result, m.should_fail);
+                    switch result {
+                        case Ok: local_success += 1; printTestSuccess(m.name);
+                        case Fail(str): local_failure += 1; printTestFail(m.name, str);
+                    };
+                    // run after test
+                    this.launchTest(test_class, { name: t.after, exception: "", should_fail: false, is_ignored: false });
+                }
             }
 
             // clean the class
-            this.launchTest(test_class, { name: t.after_class, exception: "", should_fail: false });
+            this.launchTest(test_class, { name: t.after_class, exception: "", should_fail: false, is_ignored: false });
 
             // result for the class
-            printLocalResult(local_success, local_failure, t.name);
+            printLocalResult(local_success, local_failure, local_ignored, t.name);
             total_success += local_success;
             total_failure += local_failure;
+            total_ignored += local_ignored;
         }
 
         // all the results
-        this.printTotalResult(total_success, total_failure);
+        this.printTotalResult(total_success, total_failure, total_ignored);
 
         // exit with total_failure -> no failure == 0 == OK !
         Sys.exit(total_failure);
@@ -127,23 +136,30 @@ class HUnitTestRunner {
         Sys.println("        " + o);
     }
 
+    private function printTestIgnored(test_name: String) {
+        Sys.print("    [hunit] Test " + test_name + "... ");
+        Sys.println("\x1b[33mIGNORED\x1b[39;49m.");
+    }
+
     private function printTestSuccess(test_name: String) {
         Sys.print("    [hunit] Test " + test_name + "... ");
         Sys.println("\x1b[32mOK\x1b[39;49m.");
     }
 
-    private function printTotalResult(total_success: Int, total_failure: Int) {
+    private function printTotalResult(total_success: Int, total_failure: Int, total_ignored: Int) {
         Sys.println("[hunit] Total results: " +
                     " Runned: " + (total_success + total_failure) +
                     " / Success: " + total_success +
-                    " / Failure: " + total_failure + "\n");
+                    " / Failure: " + total_failure +
+                    " / Ignored: " + total_ignored + "\n");
     }
 
-    private function printLocalResult(local_success: Int, local_failure: Int, test_name: String) {
+    private function printLocalResult(local_success: Int, local_failure: Int, local_ignored: Int, test_name: String) {
         Sys.println("    [hunit] Results for " + test_name +
                     ": Runned: " + (local_success + local_failure) +
                     " / Success: " + local_success +
-                    " / Failure: " + local_failure + "\n");
+                    " / Failure: " + local_failure +
+                    " / Ignored: " + local_ignored + "\n");
     }
 
     private function launchTest(test_class: Dynamic, method: MethodDatas): TestResult {

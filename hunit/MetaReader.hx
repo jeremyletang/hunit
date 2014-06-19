@@ -29,7 +29,8 @@ import haxe.macro.Context;
 typedef MethodDatas = {
     name: String,
     exception: String,
-    should_fail: Bool
+    should_fail: Bool,
+    is_ignored: Bool
 };
 
 typedef ClassDatas = {
@@ -66,48 +67,56 @@ class MetaReader {
         var should_fail: Bool = false;
 
         for (f in class_fields) {
-            var method_name = "";
-            var exception = "";
+            var method_name: String = "";
+            var exception: String = "";
             var should_fail: Bool = false;
+            var is_ignored: Bool = false;
+
             for (m in f.meta) {
                 switch (m.name) {
-                    case "test": { // htest metadata
+                    case "test": { // test metadata
                         switch (f.kind) {
                             case FFun(_): method_name = f.name; // only on methods fields
-                            case _: throw new Error("@htest must be used on methods", Context.currentPos());
+                            case _: throw new Error("@test must be used on methods", Context.currentPos());
                         }
                     }
-                    case "before": { // htest metadata
+                    case "ignore": { // ignore metadata
+                        switch (f.kind) {
+                            case FFun(_): is_ignored = true; // only on methods fields
+                            case _: throw new Error("@ignore must be used on methods", Context.currentPos());
+                        }
+                    }
+                    case "before": { // before metadata
                         switch (f.kind) {
                             case FFun(_): before = f.name; // only on methods fields
-                            case _: throw new Error("@hbefore must be used on methods", Context.currentPos());
+                            case _: throw new Error("@before must be used on methods", Context.currentPos());
                         }
                     }
-                    case "after": { // htest metadata
+                    case "after": { // after metadata
                         switch (f.kind) {
                             case FFun(_): after = f.name; // only on methods fields
-                            case _: throw new Error("@hafter must be used on methods", Context.currentPos());
+                            case _: throw new Error("@after must be used on methods", Context.currentPos());
                         }
                     }
-                    case "before_class": { // htest metadata
+                    case "before_class": { // before_class metadata
                         switch (f.kind) {
                             case FFun(_): before_class = f.name; // only on methods fields
-                            case _: throw new Error("@hbefore_class must be used on methods", Context.currentPos());
+                            case _: throw new Error("@before_class must be used on methods", Context.currentPos());
                         }
                     }
-                    case "after_class": { // htest metadata
+                    case "after_class": { // after_class metadata
                         switch (f.kind) {
                             case FFun(_): after_class = f.name; // only on methods fields
-                            case _: throw new Error("@hafter_class must be used on methods", Context.currentPos());
+                            case _: throw new Error("@after_class must be used on methods", Context.currentPos());
                         }
                     }
-                    case "should_fail": { // hshould_fail metadata
+                    case "should_fail": { // should_fail metadata
                         switch (f.kind) {
                             case FFun(_): should_fail = true; // only on methods fields
-                            case _: throw new Error("@hshould_fail must be used on methods", Context.currentPos());
+                            case _: throw new Error("@should_fail must be used on methods", Context.currentPos());
                         }
                     }
-                    case "expect_throw": { // hexcpect_exception
+                    case "expect_throw": { // excpect_exception
                         switch (f.kind) {
                             case FFun(_): { // only on methods fields
                                 for (p in m.params) { // checks parameters of the metadata
@@ -117,15 +126,15 @@ class MetaReader {
                                             if (Type.resolveClass(i) != null) { // verify that the class exception exist
                                                 exception = i;
                                             } else {
-                                                throw new Error("@hexpect_throw must be used with valid exception class, " +
+                                                throw new Error("@expect_throw must be used with valid exception class, " +
                                                                 i + " is not a class.", Context.currentPos());
                                             }
                                         }
-                                        case _: new Error("@hexpect_throw must be used with string literal, ",Context.currentPos());
+                                        case _: new Error("@expect_throw must be used with string literal, ",Context.currentPos());
                                     }
                                 }
                             }
-                            case _: throw new Error("@hexpect_throw must be used on methods", Context.currentPos());
+                            case _: throw new Error("@expect_throw must be used on methods", Context.currentPos());
                         }
                     }
                     case _: {}
@@ -135,7 +144,8 @@ class MetaReader {
                 methods.push({
                     name: method_name,
                     exception: exception,
-                    should_fail: should_fail
+                    should_fail: should_fail,
+                    is_ignored: is_ignored
                 });
             }
         }
