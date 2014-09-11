@@ -4,7 +4,7 @@ import hunit.Assert;
 import hunit.AssertException;
 import hunit.HUnitTest;
 
-import php.Lib;
+// import php.Lib;
 
 class TestUseless implements HUnitTest {
 

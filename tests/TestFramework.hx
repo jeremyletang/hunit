@@ -4,7 +4,7 @@ import hunit.Assert;
 import hunit.AssertException;
 import hunit.HUnitTest;
 
-import php.Lib;
+// import php.Lib;
 
 class TestFramework implements HUnitTest {
     private var i = 0;
@@ -13,12 +13,10 @@ class TestFramework implements HUnitTest {
 
     @before
     public function beforeTest() {
-        Sys.println("I BEFORE = " + i);
     }
 
     @after
     public function afterTest() {
-        Sys.println("I AFTER = " + i);
         this.i = 0;
     }
 

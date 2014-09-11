@@ -134,7 +134,8 @@ class MetaReader {
                                     }
                                 }
                             }
-                            case _: throw new Error("@expect_throw must be used on methods", Context.currentPos());
+                            case o: Sys.println(o);
+                            // case _: throw new Error("@expect_throw must be used on methods", Context.currentPos());
                         }
                     }
                     case _: {}

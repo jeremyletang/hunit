@@ -24,10 +24,12 @@ package hunit;
 
 import hunit.TestResult;
 import hunit.MetaReader;
+import hunit.ResultWriter;
 
 class HUnitTestRunner {
 
     private var test_classes: Array<ClassDatas> = [];
+    private var result_writer = new ResultWriter();
 
     public function new() { this.test_classes = new MetaReader().getTestClasses(); }
 
@@ -43,7 +45,7 @@ class HUnitTestRunner {
             local_failure = 0;
             local_success = 0;
             local_ignored = 0;
-            Sys.println("[hunit] Running " + t.name);
+            this.result_writer.add("[hunit] Running " + t.name);
 
             // get the class
             var test_class = Type.createInstance(Type.resolveClass(t.name), []);
@@ -61,6 +63,10 @@ class HUnitTestRunner {
                     this.launchTest(test_class, { name: t.before, exception: "", should_fail: false, is_ignored: false });
                     // run the test
                     var result = this.launchTest(test_class, m);
+                    switch result {
+                        case Ok: {/* do nothing */};
+                        case Fail(str): this.result_writer.add("    " + str + "\n");
+                        }
                     // update the test with should_fail
                     result = this.testShouldFail(result, m.should_fail);
                     switch result {
@@ -85,6 +91,8 @@ class HUnitTestRunner {
         // all the results
         this.printTotalResult(total_success, total_failure, total_ignored);
 
+        this.result_writer.close();
+        this.result_writer.dump();
         // exit with total_failure -> no failure == 0 == OK !
         Sys.exit(total_failure);
     }
@@ -131,35 +139,35 @@ class HUnitTestRunner {
     }
 
     private function printTestFail(test_name: String, o: Dynamic) {
-        Sys.print("    [hunit] Test " + test_name + "... ");
-        Sys.println("\x1b[31mFAILED\x1b[39;49m.");
-        Sys.println("        " + o);
+        this.result_writer.add("    [hunit] Test " + test_name + "... ");
+        this.result_writer.addn("\x1b[31mFAILED\x1b[39;49m.");
+        this.result_writer.addn("        " + o);
     }
 
     private function printTestIgnored(test_name: String) {
-        Sys.print("    [hunit] Test " + test_name + "... ");
-        Sys.println("\x1b[33mIGNORED\x1b[39;49m.");
+        this.result_writer.add("    [hunit] Test " + test_name + "... ");
+        this.result_writer.addn("\x1b[33mIGNORED\x1b[39;49m.");
     }
 
     private function printTestSuccess(test_name: String) {
-        Sys.print("    [hunit] Test " + test_name + "... ");
-        Sys.println("\x1b[32mOK\x1b[39;49m.");
+        this.result_writer.add("    [hunit] Test " + test_name + "... ");
+        this.result_writer.addn("\x1b[32mOK\x1b[39;49m.");
     }
 
     private function printTotalResult(total_success: Int, total_failure: Int, total_ignored: Int) {
-        Sys.println("[hunit] Total results: " +
-                    " Runned: " + (total_success + total_failure) +
-                    " / Success: " + total_success +
-                    " / Failure: " + total_failure +
-                    " / Ignored: " + total_ignored + "\n");
+        this.result_writer.addn("[hunit] Total results: " +
+                               " Runned: " + (total_success + total_failure) +
+                               " / Success: " + total_success +
+                               " / Failure: " + total_failure +
+                               " / Ignored: " + total_ignored + "\n");
     }
 
     private function printLocalResult(local_success: Int, local_failure: Int, local_ignored: Int, test_name: String) {
-        Sys.println("    [hunit] Results for " + test_name +
-                    ": Runned: " + (local_success + local_failure) +
-                    " / Success: " + local_success +
-                    " / Failure: " + local_failure +
-                    " / Ignored: " + local_ignored + "\n");
+        this.result_writer.addn("    [hunit] Results for " + test_name +
+                               ": Runned: " + (local_success + local_failure) +
+                               " / Success: " + local_success +
+                               " / Failure: " + local_failure +
+                               " / Ignored: " + local_ignored + "\n");
     }
 
     private function launchTest(test_class: Dynamic, method: MethodDatas): TestResult {
