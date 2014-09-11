@@ -45,7 +45,7 @@ class HUnitTestRunner {
             local_failure = 0;
             local_success = 0;
             local_ignored = 0;
-            this.result_writer.add("[hunit] Running " + t.name);
+            this.result_writer.addn("[hunit] Running " + t.name);
 
             // get the class
             var test_class = Type.createInstance(Type.resolveClass(t.name), []);
